@@ -20,12 +20,15 @@ docker -v
 
 ```dockerfile
 # 基于nginx镜像进行构建
-FROM nginx
+FROM nginx:latest
 
-# 将dist目录拷贝到指定目录
-# COPY dist /usr/share/nginx/html
-# 覆盖nginx配置文件
-# COPY default.conf /etc/nginx/conf.d/default.conf
+# 拷贝nginx配置文件
+COPY ./nginx/default.conf /etc/nginx/conf.d/default.conf
+RUN rm -rf /usr/share/nginx/html/*
+# 拷贝./dist目录下的前端代码
+COPY ./dist /usr/share/nginx/html
+
+EXPOSE 80
 ```
 
 
@@ -69,14 +72,13 @@ docker rmi <镜像名称:标签>
 ## 基于镜像启动容器
 
 ```sh
-docker run -d -p <主机端口>:<容器端口> --name <容器名称> <镜像名称>
+docker run -d [-p <主机端口>:<容器端口>] [--name <容器名称>] [-v <宿主机路径>:<容器路径>] <镜像名称>
 ```
 
 - `-d` 表示在后台运行
-- `-p` 表示将主机的端口映射到容器的端口，注意主机的端口不能被占用，可以通过 `sudo lsof -i:<端口号>` 查看端口是否被占用
-
-- 注意关闭防火墙或者防火墙开放对应的端口，否则其他机器无法访问
+- `-p` 表示将主机的端口映射到容器的端口，注意主机的端口不能被占用，可以通过 `sudo lsof -i:<端口号>` 查看端口是否被占用，注意关闭防火墙或者防火墙开放对应的端口，否则其他机器无法访问
 - `--name` 指定创建的容器名称，如果不指定 docker 会自动创建
+- `-v` （Volume 数据卷）用于将宿主机的文件夹/文件映射到容器，相当于共享文件夹，注意必须使用绝对路径
 
 
 
