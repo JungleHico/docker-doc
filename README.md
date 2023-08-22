@@ -146,3 +146,50 @@ docker save -o <导出文件名.tar> <镜像名称>
 docker load -i <文件名.tar>
 ```
 
+
+
+## Docker Compose
+
+Docker Compose 用于定义和管理多个 docker 容器
+
+安装 Docker Compose：
+
+```sh
+# 可能需要梯子
+sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
+```
+
+验证安装是否完成（可能需要重启）：
+
+```sh
+docker-compose -version
+```
+
+编写 `docker-compose.yml` 配置文件：
+
+```yaml
+version: '3'
+
+services:
+  nginx-service:
+    image: nginx-service:latest
+    ports:
+      - '80:80'
+
+  node-service:
+    image: node-service:latest
+    ports:
+      - '3000:3000'
+```
+
+> 注意：由于 web 应用是在浏览器中打开，无法通过 `localhost` 访问接口，需要通过 nginx 反向代理到对应容器的接口服务，目标地址为：`http://<后端服务名称>:<端口号>`，例如上面的例子指定为：`http://node-service:3000`
+
+常用命令：
+
+- `docker-compose up -d`：读取当前文件夹中的 `docker-compose.yml` 配置，构建对应镜像和启动容器，`-d` 参数表示在后台运行
+- `docker-compose ps`：查看 docker-compose 创建的服务
+- `docker-compose stop`：停止已创建服务的容器，不会删除这些容器
+- `docker-compose start`：启动已创建服务的容器，不会重新构建
+- `docker-compose down`：停止并删除所有容器
+- `docker-compose restart`：重启已创建服务的容器

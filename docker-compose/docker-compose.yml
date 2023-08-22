@@ -1,0 +1,12 @@
+version: '3'
+
+services:
+  nginx-service:
+    image: nginx-service:latest
+    ports:
+      - '80:80'
+
+  node-service:
+    image: node-service:latest
+    ports:
+      - '3000:3000'
