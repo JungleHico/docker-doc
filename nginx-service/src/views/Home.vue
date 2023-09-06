@@ -12,7 +12,7 @@ const src = ref('');
 axios({
   url: 'http://localhost:3000/map-tile?x=6&y=3&z=3',
   method: 'get',
-}).then((res) => {
+}).then((res: any) => {
   console.log(res);
 });
 </script>

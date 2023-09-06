@@ -72,13 +72,19 @@ docker rmi <镜像名称:标签>
 ## 基于镜像启动容器
 
 ```sh
-docker run -d [-p <主机端口>:<容器端口>] [--name <容器名称>] [-v <宿主机路径>:<容器路径>] <镜像名称>
+docker run -d [-p <主机端口>:<容器端口>] [--name=<容器名称>] [-v <宿主机路径>:<容器路径>] [--restart=<重启值>] <镜像名称>
 ```
 
 - `-d` 表示在后台运行
 - `-p` 表示将主机的端口映射到容器的端口，注意主机的端口不能被占用，可以通过 `sudo lsof -i:<端口号>` 查看端口是否被占用，注意关闭防火墙或者防火墙开放对应的端口，否则其他机器无法访问
-- `--name` 指定创建的容器名称，如果不指定 docker 会自动创建
-- `-v` （Volume 数据卷）用于将宿主机的文件夹/文件映射到容器，相当于共享文件夹，注意必须使用绝对路径
+- `--name` 指定创建的容器名称，如果不指定会自动创建
+- `-v` （Volume 数据卷）用于将宿主机的文件夹/文件映射到容器，相当于共享文件夹，常用于映射配置文件、日志目录、数据库等
+
+- `--restart` 表示容器何时重启，常见的值有：
+  - `no`：不重启
+  - `on-failure`：容器异常停止时会重启
+  - `unless-stopped`：除非手动停止，否则一直重启
+  - `always`：无论何时服务停止，都自动重启，即使手动停止
 
 
 
@@ -155,7 +161,7 @@ Docker Compose 用于定义和管理多个 docker 容器
 安装 Docker Compose：
 
 ```sh
-# 可能需要梯子
+# 可能需要梯子或者多尝试几次
 sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
 sudo chmod +x /usr/local/bin/docker-compose
 ```
@@ -173,24 +179,36 @@ version: '3'
 
 services:
   nginx-service:
+    build:
+      context: ./nginx-service
     image: nginx-service:latest
+    container_name: nginx-service
     ports:
       - '80:80'
+    # network_mode: host
+    restart: always
 
   node-service:
+    build:
+      context: ./node-service
     image: node-service:latest
+    container_name: node-service
     ports:
       - '3000:3000'
+    # network_mode: host
+    restart: always
 ```
 
 容器间通信：
 
-- docker 容器的 `network_mode` 默认为 `bridge`，即容器桥接到宿主机，不同容器间通过 IP 或者容器名称进行通信
-- 如果不同容器间想要通过 `localhost` 进行访问，需要将 `network_mode` 设为 `host` 模式，将各个容器直接绑定到网络上，注意这种模式下容器使用宿主机的端口，所以不能手动映射端口
+- docker 容器的 `network_mode` 默认为 `bridge`，即容器桥接到宿主机，不同容器间通过 IP 或者服务名称进行通信，例如：nginx 服务可以通过将接口反向代理到 `http://node-service` 来访问对应的接口
+- 如果不同容器间想要通过 `localhost` 进行访问，需要将 `network_mode` 设为 `host` 模式，将各个容器直接绑定到宿主机网络上，注意这种模式下容器使用宿主机的端口，所以不能手动映射端口
 
 常用命令：
 
-- `docker-compose up -d`：读取当前文件夹中的 `docker-compose.yml` 配置，构建对应镜像和启动容器，`-d` 参数表示在后台运行
+- `docker-compose build`：读取当前目录下的 `docker-compose.yml`，如果某个服务指定了 `build` 属性，则会基于对应路径下的 `Dockerfile` 进行构建
+
+- `docker-compose up -d`：读取当前目录中的 `docker-compose.yml` 配置，构建对应镜像和启动容器，`-d` 参数表示在后台运行
 - `docker-compose ps`：查看 docker-compose 创建的服务
 - `docker-compose stop`：停止已创建服务的容器，不会删除这些容器
 - `docker-compose start`：启动已创建服务的容器，不会重新构建

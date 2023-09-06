@@ -2,13 +2,21 @@ version: '3'
 
 services:
   nginx-service:
+    build:
+      context: ./nginx-service
     image: nginx-service:latest
+    container_name: nginx-service
     ports:
       - '80:80'
+    # network_mode: host
     restart: always
 
   node-service:
+    build:
+      context: ./node-service
     image: node-service:latest
+    container_name: node-service
     ports:
       - '3000:3000'
+    # network_mode: host
     restart: always
