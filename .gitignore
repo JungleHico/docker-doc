@@ -1,3 +1,4 @@
 nginx-service/node_modules
 nginx-service/dist
+**/*.log
 node-service/node_modules

@@ -10,6 +10,8 @@ services:
       - '80:80'
     # network_mode: host
     restart: always
+    volumes:
+      - ./nginx-service/log:/var/log/nginx
 
   node-service:
     build:
