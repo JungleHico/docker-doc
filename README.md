@@ -201,6 +201,19 @@ services:
 
 ## 常见应用部署
 
+### Node
+
+```dockerfile
+FROM ubuntu:20.04
+
+RUN apt update && \
+	apt install -y curl && \
+	curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
+	apt install -y nodejs
+```
+
+如果直接拉取 node 镜像，会包含更多的软件包和依赖项，因此基于 ubuntu 镜像安装 node 这种方式反而更加节省空间
+
 ### Gitlab
 
 ```yaml
@@ -213,19 +226,27 @@ services:
     ports:
       - '80:80'
       - '443:443'
-      - '220:22'
+      # ssh端口映射为2222
+      - '2222:22'
     restart: unless-stopped
+    # 主机名称，换成实际宿主机ip
     hostname: 192.168.1.9
-    volumes:
-      - './config:/etc/gitlab'
-      - './logs:/var/log/gitlab'
-      - './data:/var/opt/gitlab'
+    environment:
+      # 这里也要改ssh端口
+      GITLAB_OMNIBUS_CONFIG: |
+        gitlab_rails['gitlab_shell_ssh_port'] = 2222
 ```
 
 查看 root 初始密码：
 
 ```sh
 sudo docker exec -it gitlab grep 'Password:' /etc/gitlab/initial_root_password
+```
+
+添加 SSH 秘钥，创建仓库后如何添加 `remote`：
+
+```sh
+git remote add origin ssh://git@<宿主机ip>:2222/<用户名>/仓库名.git
 ```
 
 ### MySQL
@@ -251,20 +272,47 @@ mysql:
 ### MongoDB
 
 ```yaml
-mongo:
-  image: mongo:4.4.0
-  container_name: mongo
-  ports:
-    - '27017:27017'
-  restart: unless-stopped
-  environment:
-    - MONGO_INITDB_ROOT_USERNAME=mongodb
-    - MONGO_INITDB_ROOT_PASSWORD=mongodb
-  volumes:
-    # 数据库数据
-    - ./mongodb/data:/data/db
-    # 数据库日志
-    - ./mongodb/log:/var/log/mongodb
+# docker-compose.yml
+version: '3'
+
+services:
+  mongo:
+    image: mongo:4.4.0
+    container_name: mongo
+    ports:
+      - '27017:27017'
+    environment:
+      # 账号密码
+      MONGO_INITDB_ROOT_USERNAME: mongodb
+      MONGO_INITDB_ROOT_PASSWORD: mongodb
+    volumes:
+      # 数据库数据
+      - ./mongodb/data:/data/db
+      # 数据库日志
+      - ./mongodb/log:/var/log/mongodb
+      # 初始化脚本
+      - ./mongodb/init.js:/docker-entrypoint-initdb.d/init.js
+```
+
+```js
+// mongodb/init.js
+// 创建数据库
+db = db.getSiblingDB('mydb');
+
+// 创建用户
+db.createUser({
+  user: 'mongodb',
+  pwd: 'mongodb',
+  roles: [
+    {
+      role: 'readWrite',
+      db: 'mydb',
+    },
+  ],
+});
+
+// 创建集合
+db.createCollection('mycollection');
 ```
 
 ### Java
@@ -285,3 +333,30 @@ EXPOSE 8080
 # 启动
 RUN java -jar service.jar
 ```
+
+## 阿里云容器镜像服务
+
+- 创建实例：阿里云官网并登录账号，搜索容器镜像服务，创建个人实例
+
+- 设置 Resgitry 密码
+
+- 创建命名空间
+
+- 创建仓库
+
+- 镜像推送
+
+  ```sh
+  # 登录
+  docker login --username=<阿里云登录名> registry.cn-shenzhen.aliyuncs.com
+  # 为本地镜像创建标签
+  docker tag <本地镜像> registry.cn-shenzhen.aliyuncs.com/<命名空间>/<仓库名称>:<镜像标签>
+  # 推送
+  docker push registry.cn-shenzhen.aliyuncs.com/<命名空间>/<仓库名称>:<镜像标签>
+  ```
+
+- 拉取镜像
+
+  ```sh
+  docker push registry.cn-shenzhen.aliyuncs.com/<命名空间>/<仓库名称>:<镜像标签>
+  ```
