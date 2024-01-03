@@ -168,7 +168,7 @@ services:
     ports:
       - '80:80'
     # network_mode: host
-    restart: always
+    restart: unless-stopped
     volumes:
       - ./nginx-service/log:/var/log/nginx
 
@@ -180,7 +180,7 @@ services:
     ports:
       - '3000:3000'
     # network_mode: host
-    restart: always
+    restart: unless-stopped
 ```
 
 容器间通信：
@@ -360,3 +360,27 @@ RUN java -jar service.jar
   ```sh
   docker push registry.cn-shenzhen.aliyuncs.com/<命名空间>/<仓库名称>:<镜像标签>
   ```
+
+
+
+## Portainer 可视化管理
+
+拉取社区版镜像：
+
+```sh
+sudo docker pull portainer/protainer-ce
+```
+
+启动容器：
+
+```sh
+sudo docker run -d -p 9000:9000 --name=portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v portainer_data:/data portainer/portainer-ce:latest
+```
+
+浏览器访问：
+
+```sh
+http://localhost:9000
+```
+
+输入密码，创建 `admin` 账号并登录，选择快速开始，选择 `local` 这个环境
