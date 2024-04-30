@@ -210,6 +210,15 @@ RUN apt update && \
 	apt install -y curl && \
 	curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
 	apt install -y nodejs
+
+WORKDIR /usr/src/app
+COPY . .
+
+RUN npm install
+
+EXPOSE 3000
+
+CMD ["npm", "start"]
 ```
 
 如果直接拉取 node 镜像，会包含更多的软件包和依赖项，因此基于 ubuntu 镜像安装 node 这种方式反而更加节省空间
